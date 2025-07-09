@@ -12,7 +12,7 @@ const AdminCalendar = () => {
 
   const fetchBookings = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/bookings');
+      const res = await axios.get('https://app-1-k69l.onrender.com/api/bookings');
       setBookings(res.data);
     } catch (err) {
       console.error('Error fetching bookings:', err);
