@@ -199,10 +199,13 @@
 
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
+import { io } from 'socket.io-client'; // ✅ Import socket.io
+
+const SOCKET_URL = 'wss://calcom-app1.onrender.com'; // ✅ Use your Render backend root URL (wss: for secure)
 
 function UserForm() {
   const [form, setForm] = useState({
@@ -214,8 +217,27 @@ function UserForm() {
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [socket, setSocket] = useState(null); // ✅ State to store socket
 
-  const API_URL = process.env.REACT_APP_API_URL || 'https://app-1-k69l.onrender.com/api';
+  useEffect(() => {
+    // ✅ Connect socket on mount
+    const newSocket = io(SOCKET_URL, {
+      transports: ['websocket'], // Use only websocket (not polling)
+    });
+
+    setSocket(newSocket);
+
+    // ✅ Listen to events (example: 'bookingConfirmed')
+    newSocket.on('bookingConfirmed', (data) => {
+      console.log('Booking Confirmed:', data);
+      setMessage(`Booking Confirmed for ${data.name}`);
+      launchConfetti();
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
 
   const handleChange = (e) => {
     setForm({
@@ -263,8 +285,9 @@ function UserForm() {
     setMessage('');
 
     try {
-      const res = await axios.post(`${API_URL}/book`, form);
+      const res = await axios.post('https://app-1-k69l.onrender.com/api/book', form);
       setMessage(res.data.message);
+      socket?.emit('newBooking', form); // ✅ Emit new booking to server
       launchConfetti();
     } catch (err) {
       setMessage(err.response?.data?.message || 'Something went wrong.');
@@ -314,12 +337,12 @@ function UserForm() {
             }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: index * 0.1,
+            transition={{ 
+              delay: index * 0.1, 
               duration: 0.5,
-              type: 'spring',
-              stiffness: 300,
-              damping: 20,
+              type: 'spring', 
+              stiffness: 300, 
+              damping: 20 
             }}
           />
         ))}
@@ -345,7 +368,8 @@ function UserForm() {
               ...messageStyle,
               color:
                 message.toLowerCase().includes('success') ||
-                message.toLowerCase().includes('booked')
+                message.toLowerCase().includes('booked') ||
+                message.toLowerCase().includes('confirmed')
                   ? 'green'
                   : 'red',
             }}
@@ -361,18 +385,10 @@ function UserForm() {
   );
 }
 
-// Styles
+// Styles (unchanged)
 
-const containerStyle = {
-  width: '100%',
-};
-
-const formStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '15px',
-};
-
+const containerStyle = { width: '100%' };
+const formStyle = { display: 'flex', flexDirection: 'column', gap: '15px' };
 const inputStyle = {
   padding: '10px',
   fontSize: '16px',
@@ -381,7 +397,6 @@ const inputStyle = {
   outline: 'none',
   transition: 'all 0.3s ease',
 };
-
 const buttonStyle = {
   padding: '12px',
   fontSize: '16px',
@@ -390,7 +405,6 @@ const buttonStyle = {
   color: 'white',
   border: 'none',
 };
-
 const messageStyle = {
   marginTop: '10px',
   textAlign: 'center',
