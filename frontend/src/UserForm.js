@@ -60,7 +60,7 @@ function UserForm() {
     setMessage('');
 
     try {
-      const res = await axios.post('http://localhost:5000/api/book', form);
+      const res = await axios.post('https://app-1-k69l.onrender.com', form);
       setMessage(res.data.message);
       launchConfetti();
     } catch (err) {
@@ -109,10 +109,15 @@ function UserForm() {
               borderColor: '#007bff',
               boxShadow: '0 0 8px rgba(0, 123, 255, 0.3)',
             }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.5 }}
+            transition={{ 
+              delay: index * 0.1, 
+              duration: 0.5,
+              type: 'spring', 
+              stiffness: 300, 
+              damping: 20 
+            }}
           />
         ))}
 
